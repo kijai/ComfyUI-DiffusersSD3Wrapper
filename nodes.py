@@ -73,40 +73,43 @@ class SD3ControlNetSampler:
         #images = images.to(device)
         images = images.permute(0, 3, 1, 2)
         images = images * 2.0 - 1.0
+        out = []
+        for img in images:
+            # controlnet config
+            controlnet_conditioning = [
+                dict(
+                    control_index=0,
+                    control_image=img.unsqueeze(0),
+                    control_weight=control_weight,
+                    control_pooled_projections='zeros'
+                )
+            ]
 
-        # controlnet config
-        controlnet_conditioning = [
-            dict(
-                control_index=0,
-                control_image=images,
-                control_weight=control_weight,
-                control_pooled_projections='zeros'
-            )
-        ]
-
-        generator = torch.Generator(device='cpu')
-        generator.manual_seed(seed)
-        controlnet_start_step = int(steps * controlnet_start)
-        controlnet_end_step = int(steps * controlnet_end)
-        print("cn start step: ",controlnet_start_step, "cn end step: ", controlnet_end_step)
-        # infer
-        results = pipe(
-            prompt=prompt,
-            negative_prompt=n_prompt,
-            num_images_per_prompt=1,
-            controlnet_conditioning=controlnet_conditioning,
-            controlnet_start_step=controlnet_start_step,
-            controlnet_end_step=controlnet_end_step,
-            num_inference_steps=steps,
-            guidance_scale=cfg,
-            height=height,
-            width=width,
-            latents=None,
-            generator=generator,
-            output_type="pt",
-        ).images[0]
-       
-        tensor_out = results.unsqueeze(0).permute(0, 2, 3, 1)
+            generator = torch.Generator(device='cpu')
+            generator.manual_seed(seed)
+            controlnet_start_step = int(steps * controlnet_start)
+            controlnet_end_step = int(steps * controlnet_end)
+            print("cn start step: ",controlnet_start_step, "cn end step: ", controlnet_end_step)
+            # infer
+            results = pipe(
+                prompt=prompt,
+                negative_prompt=n_prompt,
+                num_images_per_prompt=1,
+                controlnet_conditioning=controlnet_conditioning,
+                controlnet_start_step=controlnet_start_step,
+                controlnet_end_step=controlnet_end_step,
+                num_inference_steps=steps,
+                guidance_scale=cfg,
+                height=height,
+                width=width,
+                latents=None,
+                generator=generator,
+                output_type="pt",
+            ).images[0]
+            out.append(results)
+        tensor_out = torch.stack(out, dim=0)
+        print(tensor_out.shape)
+        tensor_out = tensor_out.permute(0, 2, 3, 1)
         tensor_out = tensor_out.cpu().float()
         
 
