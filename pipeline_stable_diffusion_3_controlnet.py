@@ -38,6 +38,7 @@ from diffusers.utils.torch_utils import randn_tensor
 from diffusers.pipelines.pipeline_utils import DiffusionPipeline
 from diffusers.pipelines.stable_diffusion_3.pipeline_output import StableDiffusion3PipelineOutput
 
+from comfy.utils import ProgressBar
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
@@ -906,6 +907,7 @@ class StableDiffusion3CommonPipeline(DiffusionPipeline, SD3LoraLoaderMixin, From
         )
 
         # 6. Denoising loop
+        comfy_pbar = ProgressBar(num_inference_steps)
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
                 if self.interrupt:
@@ -1010,6 +1012,7 @@ class StableDiffusion3CommonPipeline(DiffusionPipeline, SD3LoraLoaderMixin, From
                 # call the callback, if provided
                 if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
                     progress_bar.update()
+                    comfy_pbar.update(1)
 
                 if XLA_AVAILABLE:
                     xm.mark_step()
