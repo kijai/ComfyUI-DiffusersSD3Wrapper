@@ -2,6 +2,11 @@ import torch
 from .pipeline_stable_diffusion_3_controlnet import StableDiffusion3CommonPipeline
 import comfy.model_management as mm
 from comfy.utils import ProgressBar
+import folder_paths
+import os
+import shutil
+
+script_directory = os.path.dirname(os.path.abspath(__file__))
 
 class LoadSD3DiffusersPipeline:
     @classmethod
@@ -10,6 +15,7 @@ class LoadSD3DiffusersPipeline:
              "controlnet": (
             [   'InstantX/SD3-Controlnet-Canny',
                 'InstantX/SD3-Controlnet-Canny_alpha_512',
+                'InstantX/SD3-Controlnet-Pose'
             ],
             {
             "default": 'InstantX/SD3-Controlnet-Canny'
@@ -26,10 +32,23 @@ class LoadSD3DiffusersPipeline:
 
     def loadmodel(self, controlnet, use_t5, hf_token):
         # load pipeline
+        model_name = controlnet.rsplit('/', 1)[-1]
+        cn_model_path = os.path.join(folder_paths.models_dir, "diffusers", "SD3_controlnet", model_name)
+        if not os.path.exists(cn_model_path):
+            print(f"Downloading ControlNet model to: {cn_model_path}")
+            from huggingface_hub import snapshot_download
+            snapshot_download(repo_id=controlnet, 
+                                local_dir=cn_model_path, 
+                                local_dir_use_symlinks=False)
+        if not os.path.exists(os.path.join(cn_model_path, "config.json")):
+            source_path = os.path.join(script_directory, 'configs','config.json')
+            destination_path = os.path.join(cn_model_path, 'config.json')
+            shutil.copy(source_path, destination_path)
+        
         base_model = 'stabilityai/stable-diffusion-3-medium-diffusers'
         pipe = StableDiffusion3CommonPipeline.from_pretrained(
             base_model, 
-            controlnet_list=[controlnet],
+            controlnet_list=[cn_model_path],
             token = hf_token
         )
         if not use_t5:

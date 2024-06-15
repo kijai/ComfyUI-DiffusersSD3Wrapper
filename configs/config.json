@@ -1,0 +1,16 @@
+{
+  "_class_name": "ControlNetSD3Model",
+  "_diffusers_version": "0.29.0.dev0",
+  "_name_or_path": "/path/",
+  "attention_head_dim": 64,
+  "caption_projection_dim": 1536,
+  "in_channels": 16,
+  "joint_attention_dim": 4096,
+  "num_attention_heads": 24,
+  "num_layers": 6,
+  "out_channels": 16,
+  "patch_size": 2,
+  "pooled_projection_dim": 2048,
+  "pos_embed_max_size": 192,
+  "sample_size": 128
+}
