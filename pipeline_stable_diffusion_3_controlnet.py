@@ -704,6 +704,8 @@ class StableDiffusion3CommonPipeline(DiffusionPipeline, SD3LoraLoaderMixin, From
         timesteps: List[int] = None,
         guidance_scale: float = 7.0,
         controlnet_conditioning: List[dict] = [],
+        controlnet_start_step: int = 0,
+        controlnet_end_step: int = -1,
         negative_prompt: Optional[Union[str, List[str]]] = None,
         negative_prompt_2: Optional[Union[str, List[str]]] = None,
         negative_prompt_3: Optional[Union[str, List[str]]] = None,
@@ -829,7 +831,7 @@ class StableDiffusion3CommonPipeline(DiffusionPipeline, SD3LoraLoaderMixin, From
             negative_prompt_embeds=negative_prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-            callback_on_step_end_tensor_inputs=callback_on_step_end_tensor_inputs,
+            callback_on_step_end_tensor_inputs=callback_on_step_end_tensor_inputs
         )
 
         self._guidance_scale = guidance_scale
@@ -908,6 +910,7 @@ class StableDiffusion3CommonPipeline(DiffusionPipeline, SD3LoraLoaderMixin, From
 
         # 6. Denoising loop
         comfy_pbar = ProgressBar(num_inference_steps)
+        
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
                 if self.interrupt:
@@ -920,7 +923,7 @@ class StableDiffusion3CommonPipeline(DiffusionPipeline, SD3LoraLoaderMixin, From
 
 
                 # controlnet(s) inference
-                if len(controlnet_conditioning) > 0:
+                if controlnet_start_step <= i < controlnet_end_step and len(controlnet_conditioning) > 0:
                     control_block_samples_list = []
 
                     for cc_info in controlnet_conditioning:

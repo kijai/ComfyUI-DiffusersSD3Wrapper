@@ -53,6 +53,8 @@ class SD3ControlNetSampler:
             "steps": ("INT", {"default": 50, "min": 1, "max": 200, "step": 1}),
             "cfg": ("FLOAT", {"default": 7.0, "min": 0.0, "max": 20.0, "step": 0.01}),
             "control_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 20.0, "step": 0.01}),
+            "controlnet_start": ("FLOAT", {"default": 0.0, "min": 0, "max": 1.0, "step": 0.01}),
+            "controlnet_end": ("FLOAT", {"default": 1.0, "min": 0, "max": 1.0, "step": 0.01}),
             },
         }
     
@@ -61,7 +63,7 @@ class SD3ControlNetSampler:
     FUNCTION = "process"
     CATEGORY = "DiffusersSD3"
 
-    def process(self, sd3_pipeline, images, width, height, prompt, n_prompt, seed, steps, cfg, control_weight):
+    def process(self, sd3_pipeline, images, width, height, prompt, n_prompt, seed, steps, cfg, control_weight, controlnet_start, controlnet_end):
         device = mm.get_torch_device()
         offload_device = mm.unet_offload_device()
         pipe = sd3_pipeline
@@ -84,13 +86,17 @@ class SD3ControlNetSampler:
 
         generator = torch.Generator(device='cpu')
         generator.manual_seed(seed)
-
+        controlnet_start_step = int(steps * controlnet_start)
+        controlnet_end_step = int(steps * controlnet_end)
+        print("cn start step: ",controlnet_start_step, "cn end step: ", controlnet_end_step)
         # infer
         results = pipe(
             prompt=prompt,
             negative_prompt=n_prompt,
             num_images_per_prompt=1,
             controlnet_conditioning=controlnet_conditioning,
+            controlnet_start_step=controlnet_start_step,
+            controlnet_end_step=controlnet_end_step,
             num_inference_steps=steps,
             guidance_scale=cfg,
             height=height,
@@ -99,10 +105,10 @@ class SD3ControlNetSampler:
             generator=generator,
             output_type="pt",
         ).images[0]
-        print(results.shape)
+       
         tensor_out = results.unsqueeze(0).permute(0, 2, 3, 1)
         tensor_out = tensor_out.cpu().float()
-        print(tensor_out.shape)
+        
 
         return (tensor_out,)
     
