@@ -1,6 +1,7 @@
 import torch
 from .pipeline_stable_diffusion_3_controlnet import StableDiffusion3CommonPipeline
 import comfy.model_management as mm
+from comfy.utils import ProgressBar
 
 class LoadSD3DiffusersPipeline:
     @classmethod
@@ -74,6 +75,8 @@ class SD3ControlNetSampler:
         images = images.permute(0, 3, 1, 2)
         images = images * 2.0 - 1.0
         out = []
+        if B > 1:
+            batch_pbar = ProgressBar(B)
         for img in images:
             # controlnet config
             controlnet_conditioning = [
@@ -107,6 +110,8 @@ class SD3ControlNetSampler:
                 output_type="pt",
             ).images[0]
             out.append(results)
+            if B > 1:
+                batch_pbar.update(1)
         tensor_out = torch.stack(out, dim=0)
         print(tensor_out.shape)
         tensor_out = tensor_out.permute(0, 2, 3, 1)
