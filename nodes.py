@@ -93,6 +93,7 @@ class SD3ControlNetSampler:
             "control_start": ("FLOAT", {"default": 0.0, "min": 0, "max": 1.0, "step": 0.01}),
             "control_end": ("FLOAT", {"default": 1.0, "min": 0, "max": 1.0, "step": 0.01}),
             "control_2_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 20.0, "step": 0.01}),
+            "guess_mode": ("BOOLEAN", {"default": False}),
 
             },
             "optional": {
@@ -106,7 +107,7 @@ class SD3ControlNetSampler:
     CATEGORY = "DiffusersSD3"
 
     def process(self, sd3_pipeline, cn_images_1, width, height, prompt, n_prompt, seed, steps, cfg, control_1_weight, control_start, control_end, 
-                control_2_weight, cn_images_2=None):
+                control_2_weight, guess_mode, cn_images_2=None):
         device = mm.get_torch_device()
         offload_device = mm.unet_offload_device()
         pipe = sd3_pipeline
@@ -126,7 +127,8 @@ class SD3ControlNetSampler:
                     control_index=0,
                     control_image=img_1.unsqueeze(0),
                     control_weight=control_1_weight,
-                    control_pooled_projections='zeros'
+                    control_pooled_projections='zeros',
+                    guess_mode = guess_mode
                 )
             ]
             if cn_images_2 is not None:
@@ -138,7 +140,8 @@ class SD3ControlNetSampler:
                             control_index=1,
                             control_image=img_2.unsqueeze(0),
                             control_weight=control_2_weight,
-                            control_pooled_projections='zeros'
+                            control_pooled_projections='zeros',
+                            guess_mode = guess_mode
                         )
                     )
 

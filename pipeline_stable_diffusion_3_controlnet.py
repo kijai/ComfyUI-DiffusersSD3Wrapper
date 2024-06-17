@@ -27,7 +27,8 @@ from diffusers.image_processor import VaeImageProcessor
 from diffusers.loaders import FromSingleFileMixin, SD3LoraLoaderMixin
 from diffusers.models.autoencoders import AutoencoderKL
 from diffusers.models.transformers import SD3Transformer2DModel
-from diffusers.models.controlnet_sd3 import ControlNetSD3Model, MultiControlNetSD3Model
+#from diffusers.models.controlnet_sd3 import ControlNetSD3Model, MultiControlNetSD3Model
+from .controlnet_sd3 import ControlNetSD3Model, MultiControlNetSD3Model
 from diffusers.schedulers import FlowMatchEulerDiscreteScheduler
 from diffusers.utils import (
     is_torch_xla_available,
@@ -706,6 +707,7 @@ class StableDiffusion3CommonPipeline(DiffusionPipeline, SD3LoraLoaderMixin, From
         controlnet_conditioning: List[dict] = [],
         controlnet_start_step: int = 0,
         controlnet_end_step: int = -1,
+        guess_mode: bool = False,
         negative_prompt: Optional[Union[str, List[str]]] = None,
         negative_prompt_2: Optional[Union[str, List[str]]] = None,
         negative_prompt_3: Optional[Union[str, List[str]]] = None,
@@ -951,6 +953,7 @@ class StableDiffusion3CommonPipeline(DiffusionPipeline, SD3LoraLoaderMixin, From
                         # cfg
                         controlnet = self.controlnet_list.nets[int(cc_info['control_index'])]
                         controlnet_conditioning_scale = cc_info['control_weight']
+                        guess_mode = cc_info['guess_mode']
 
                         # controlnet infer
                         control_block_samples = controlnet(
@@ -962,6 +965,7 @@ class StableDiffusion3CommonPipeline(DiffusionPipeline, SD3LoraLoaderMixin, From
                             controlnet_cond=controlnet_conditioning_image,
                             conditioning_scale=controlnet_conditioning_scale,
                             return_dict=False,
+                            guess_mode=guess_mode
                         )[0]
 
                         control_block_samples_list.append(control_block_samples)
