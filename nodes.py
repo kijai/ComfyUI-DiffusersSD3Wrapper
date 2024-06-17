@@ -16,6 +16,7 @@ class LoadSD3DiffusersPipeline:
             [   'InstantX/SD3-Controlnet-Canny',
                 'InstantX/SD3-Controlnet-Canny_alpha_512',
                 'InstantX/SD3-Controlnet-Pose',
+                'InstantX/SD3-Controlnet-Tile',
                 'None'
             ],
             {
